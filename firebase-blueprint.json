@@ -1,0 +1,145 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "Authenticated user profile, seller store name, and private delivery details.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "description": "Firebase Auth UID of the owner." },
+        "displayName": { "type": "string", "description": "User full name." },
+        "email": { "type": "string", "description": "User email address." },
+        "shopName": { "type": "string", "description": "Optional seller beverage shop name." },
+        "deliveryAddress": { "type": "string", "description": "Default delivery address." },
+        "phone": { "type": "string", "description": "Contact phone number." },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Creation server timestamp (FieldValue.serverTimestamp())." },
+        "updatedAt": { "type": "string", "format": "date-time", "description": "Last update server timestamp (FieldValue.serverTimestamp())." }
+      },
+      "required": ["userId", "displayName", "email", "shopName", "deliveryAddress", "phone", "createdAt", "updatedAt"]
+    },
+    "DrinkListing": {
+      "title": "DrinkListing",
+      "description": "Marketplace beverage listing published by a seller.",
+      "type": "object",
+      "properties": {
+        "sellerId": { "type": "string", "description": "Firebase Auth UID of the seller." },
+        "sellerName": { "type": "string", "description": "Seller display name." },
+        "shopName": { "type": "string", "description": "Beverage shop or brand name." },
+        "name": { "type": "string", "description": "Beverage product title." },
+        "description": { "type": "string", "description": "Beverage flavor and ingredients description." },
+        "category": { "type": "string", "enum": ["Kopi", "Teh & Matcha", "Jus & Segar", "Boba & Susu"] },
+        "imageKey": { "type": "string", "enum": ["coffee", "matcha", "citrus", "berry", "boba"] },
+        "price": { "type": "integer", "description": "Unit price in IDR." },
+        "originalPrice": { "type": "integer", "description": "Original price before discount in IDR (0 if none)." },
+        "sizeLabel": { "type": "string", "description": "Cup volume label e.g. Reguler 350ml." },
+        "calories": { "type": "integer", "description": "Estimated calories in kcal." },
+        "rating": { "type": "number", "description": "Product rating between 0 and 5." },
+        "soldCount": { "type": "integer", "description": "Units sold count." },
+        "stock": { "type": "integer", "description": "Available daily stock." },
+        "status": { "type": "string", "enum": ["ACTIVE", "PAUSED"] },
+        "featured": { "type": "boolean", "description": "Whether highlighted in featured picks." },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Creation server timestamp (FieldValue.serverTimestamp())." },
+        "updatedAt": { "type": "string", "format": "date-time", "description": "Last update server timestamp (FieldValue.serverTimestamp())." }
+      },
+      "required": ["sellerId", "sellerName", "shopName", "name", "description", "category", "imageKey", "price", "originalPrice", "sizeLabel", "calories", "rating", "soldCount", "stock", "status", "featured", "createdAt", "updatedAt"]
+    },
+    "CartItem": {
+      "title": "CartItem",
+      "description": "Customized beverage item in a user's shopping cart.",
+      "type": "object",
+      "properties": {
+        "drinkId": { "type": "string" },
+        "drinkName": { "type": "string" },
+        "shopName": { "type": "string" },
+        "sellerId": { "type": "string" },
+        "category": { "type": "string" },
+        "imageKey": { "type": "string" },
+        "unitPrice": { "type": "integer" },
+        "toppingPrice": { "type": "integer" },
+        "quantity": { "type": "integer" },
+        "sugarLevel": { "type": "string" },
+        "iceLevel": { "type": "string" },
+        "topping": { "type": "string" },
+        "notes": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["drinkId", "drinkName", "shopName", "sellerId", "category", "imageKey", "unitPrice", "toppingPrice", "quantity", "sugarLevel", "iceLevel", "topping", "notes", "createdAt", "updatedAt"]
+    },
+    "FavoriteItem": {
+      "title": "FavoriteItem",
+      "description": "User-saved favorite beverage reference.",
+      "type": "object",
+      "properties": {
+        "drinkId": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["drinkId", "createdAt"]
+    },
+    "DrinkOrder": {
+      "title": "DrinkOrder",
+      "description": "Placed beverage order header with status and pricing breakdown.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "orderNumber": { "type": "string" },
+        "summaryTitle": { "type": "string" },
+        "totalItems": { "type": "integer" },
+        "subtotal": { "type": "integer" },
+        "deliveryFee": { "type": "integer" },
+        "discount": { "type": "integer" },
+        "totalAmount": { "type": "integer" },
+        "promoCode": { "type": "string" },
+        "paymentMethod": { "type": "string" },
+        "deliveryAddress": { "type": "string" },
+        "status": { "type": "string", "enum": ["DIPROSES", "DIKIRIM", "SELESAI", "DIBATALKAN"] },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "orderNumber", "summaryTitle", "totalItems", "subtotal", "deliveryFee", "discount", "totalAmount", "promoCode", "paymentMethod", "deliveryAddress", "status", "createdAt", "updatedAt"]
+    },
+    "OrderLineItem": {
+      "title": "OrderLineItem",
+      "description": "Individual customized drink line item belonging to an order.",
+      "type": "object",
+      "properties": {
+        "orderId": { "type": "string" },
+        "drinkId": { "type": "string" },
+        "drinkName": { "type": "string" },
+        "shopName": { "type": "string" },
+        "imageKey": { "type": "string" },
+        "unitPrice": { "type": "integer" },
+        "toppingPrice": { "type": "integer" },
+        "quantity": { "type": "integer" },
+        "customizationLabel": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["orderId", "drinkId", "drinkName", "shopName", "imageKey", "unitPrice", "toppingPrice", "quantity", "customizationLabel", "createdAt"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/UserProfile" },
+      "description": "Private user profile and delivery address isolated to owner."
+    },
+    "/drinks/{drinkId}": {
+      "schema": { "$ref": "#/entities/DrinkListing" },
+      "description": "Marketplace beverage catalog listings; active listings readable by authenticated users, writable only by seller."
+    },
+    "/users/{userId}/cart/{cartItemId}": {
+      "schema": { "$ref": "#/entities/CartItem" },
+      "description": "Shopping cart items owned by userId."
+    },
+    "/users/{userId}/favorites/{drinkId}": {
+      "schema": { "$ref": "#/entities/FavoriteItem" },
+      "description": "Favorite beverages bookmarked by userId."
+    },
+    "/users/{userId}/orders/{orderId}": {
+      "schema": { "$ref": "#/entities/DrinkOrder" },
+      "description": "Beverage orders placed by userId."
+    },
+    "/users/{userId}/orders/{orderId}/items/{itemId}": {
+      "schema": { "$ref": "#/entities/OrderLineItem" },
+      "description": "Line items under a user's beverage order."
+    }
+  }
+}

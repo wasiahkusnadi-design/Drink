@@ -1,0 +1,258 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // 1. Global Safety Net (Default Deny)
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // 2. Global Hardened Helpers
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    // 3. Validation Helpers
+    function isValidUserProfile(data) {
+      return data.userId is string && data.userId.size() >= 1 && data.userId.size() <= 128 &&
+             data.displayName is string && data.displayName.size() >= 1 && data.displayName.size() <= 80 &&
+             data.email is string && data.email.size() <= 120 &&
+             data.shopName is string && data.shopName.size() <= 80 &&
+             data.deliveryAddress is string && data.deliveryAddress.size() <= 250 &&
+             data.phone is string && data.phone.size() <= 30;
+    }
+
+    function isValidDrinkListing(data) {
+      return data.sellerId is string && data.sellerId.size() >= 1 && data.sellerId.size() <= 128 &&
+             data.sellerName is string && data.sellerName.size() >= 1 && data.sellerName.size() <= 80 &&
+             data.shopName is string && data.shopName.size() >= 2 && data.shopName.size() <= 80 &&
+             data.name is string && data.name.size() >= 2 && data.name.size() <= 80 &&
+             data.description is string && data.description.size() >= 5 && data.description.size() <= 400 &&
+             data.category in ['Kopi', 'Teh & Matcha', 'Jus & Segar', 'Boba & Susu'] &&
+             data.imageKey in ['coffee', 'matcha', 'citrus', 'berry', 'boba'] &&
+             data.price is int && data.price >= 1000 && data.price <= 1000000 &&
+             data.originalPrice is int && data.originalPrice >= 0 && data.originalPrice <= 1000000 &&
+             data.sizeLabel is string && data.sizeLabel.size() >= 2 && data.sizeLabel.size() <= 40 &&
+             data.calories is int && data.calories >= 0 && data.calories <= 2000 &&
+             data.rating is number && data.rating >= 0 && data.rating <= 5 &&
+             data.soldCount is int && data.soldCount >= 0 && data.soldCount <= 1000000 &&
+             data.stock is int && data.stock >= 0 && data.stock <= 10000 &&
+             data.status in ['ACTIVE', 'PAUSED'] &&
+             data.featured is bool;
+    }
+
+    function isValidCartItem(data) {
+      return data.drinkId is string && data.drinkId.size() >= 1 && data.drinkId.size() <= 128 &&
+             data.drinkName is string && data.drinkName.size() >= 1 && data.drinkName.size() <= 80 &&
+             data.shopName is string && data.shopName.size() >= 1 && data.shopName.size() <= 80 &&
+             data.sellerId is string && data.sellerId.size() >= 1 && data.sellerId.size() <= 128 &&
+             data.category is string && data.category.size() >= 1 && data.category.size() <= 40 &&
+             data.imageKey in ['coffee', 'matcha', 'citrus', 'berry', 'boba'] &&
+             data.unitPrice is int && data.unitPrice >= 1000 && data.unitPrice <= 1000000 &&
+             data.toppingPrice is int && data.toppingPrice >= 0 && data.toppingPrice <= 200000 &&
+             data.quantity is int && data.quantity >= 1 && data.quantity <= 99 &&
+             data.sugarLevel in ['Normal', 'Less Sugar', 'No Sugar'] &&
+             data.iceLevel in ['Normal', 'Less Ice', 'No Ice'] &&
+             data.topping is string && data.topping.size() >= 1 && data.topping.size() <= 60 &&
+             data.notes is string && data.notes.size() <= 160;
+    }
+
+    function isValidDrinkOrder(data) {
+      return data.userId is string && data.userId.size() >= 1 && data.userId.size() <= 128 &&
+             data.orderNumber is string && data.orderNumber.size() >= 3 && data.orderNumber.size() <= 40 &&
+             data.summaryTitle is string && data.summaryTitle.size() >= 2 && data.summaryTitle.size() <= 120 &&
+             data.totalItems is int && data.totalItems >= 1 && data.totalItems <= 500 &&
+             data.subtotal is int && data.subtotal >= 1000 && data.subtotal <= 50000000 &&
+             data.deliveryFee is int && data.deliveryFee >= 0 && data.deliveryFee <= 500000 &&
+             data.discount is int && data.discount >= 0 && data.discount <= 5000000 &&
+             data.totalAmount is int && data.totalAmount >= 0 && data.totalAmount <= 50000000 &&
+             data.promoCode is string && data.promoCode.size() <= 30 &&
+             data.paymentMethod in ['QRIS', 'GoPay / E-Wallet', 'Transfer Bank', 'COD (Bayar di Tempat)'] &&
+             data.deliveryAddress is string && data.deliveryAddress.size() >= 5 && data.deliveryAddress.size() <= 250 &&
+             data.status in ['DIPROSES', 'DIKIRIM', 'SELESAI', 'DIBATALKAN'];
+    }
+
+    function isValidOrderLineItem(data) {
+      return data.orderId is string && data.orderId.size() >= 1 && data.orderId.size() <= 128 &&
+             data.drinkId is string && data.drinkId.size() >= 1 && data.drinkId.size() <= 128 &&
+             data.drinkName is string && data.drinkName.size() >= 1 && data.drinkName.size() <= 80 &&
+             data.shopName is string && data.shopName.size() >= 1 && data.shopName.size() <= 80 &&
+             data.imageKey in ['coffee', 'matcha', 'citrus', 'berry', 'boba'] &&
+             data.unitPrice is int && data.unitPrice >= 1000 && data.unitPrice <= 1000000 &&
+             data.toppingPrice is int && data.toppingPrice >= 0 && data.toppingPrice <= 200000 &&
+             data.quantity is int && data.quantity >= 1 && data.quantity <= 99 &&
+             data.customizationLabel is string && data.customizationLabel.size() <= 160;
+    }
+
+    // 4. User Profile (PII isolated strictly to owner)
+    match /users/{userId} {
+      allow get, list: if isSignedIn() && request.auth.uid == userId;
+
+      allow create: if isSignedIn() &&
+                       isValidId(userId) &&
+                       request.auth.uid == userId &&
+                       incoming().userId == request.auth.uid &&
+                       incoming().keys().hasAll(['userId', 'displayName', 'email', 'shopName', 'deliveryAddress', 'phone', 'createdAt', 'updatedAt']) &&
+                       incoming().keys().hasOnly(['userId', 'displayName', 'email', 'shopName', 'deliveryAddress', 'phone', 'createdAt', 'updatedAt']) &&
+                       isValidUserProfile(incoming()) &&
+                       incoming().createdAt is timestamp && incoming().createdAt <= request.time &&
+                       incoming().updatedAt is timestamp && incoming().updatedAt <= request.time;
+
+      allow update: if isSignedIn() &&
+                       isValidId(userId) &&
+                       request.auth.uid == userId &&
+                       isValidUserProfile(incoming()) &&
+                       incoming().userId == existing().userId &&
+                       incoming().createdAt == existing().createdAt &&
+                       incoming().updatedAt is timestamp && incoming().updatedAt <= request.time &&
+                       incoming().diff(existing()).affectedKeys().hasOnly(['displayName', 'email', 'shopName', 'deliveryAddress', 'phone', 'updatedAt']);
+
+      allow delete: if isSignedIn() && isValidId(userId) && request.auth.uid == userId;
+
+      // 4a. User Shopping Cart
+      match /cart/{cartItemId} {
+        allow get: if isSignedIn() && isValidId(userId) && isValidId(cartItemId) && request.auth.uid == userId;
+        allow list: if isSignedIn() && isValidId(userId) && request.auth.uid == userId;
+
+        allow create: if isSignedIn() &&
+                         isValidId(userId) &&
+                         isValidId(cartItemId) &&
+                         request.auth.uid == userId &&
+                         incoming().keys().hasAll(['drinkId', 'drinkName', 'shopName', 'sellerId', 'category', 'imageKey', 'unitPrice', 'toppingPrice', 'quantity', 'sugarLevel', 'iceLevel', 'topping', 'notes', 'createdAt', 'updatedAt']) &&
+                         incoming().keys().hasOnly(['drinkId', 'drinkName', 'shopName', 'sellerId', 'category', 'imageKey', 'unitPrice', 'toppingPrice', 'quantity', 'sugarLevel', 'iceLevel', 'topping', 'notes', 'createdAt', 'updatedAt']) &&
+                         isValidCartItem(incoming()) &&
+                         incoming().createdAt is timestamp && incoming().createdAt <= request.time &&
+                         incoming().updatedAt is timestamp && incoming().updatedAt <= request.time;
+
+        allow update: if isSignedIn() &&
+                         isValidId(userId) &&
+                         isValidId(cartItemId) &&
+                         request.auth.uid == userId &&
+                         isValidCartItem(incoming()) &&
+                         incoming().drinkId == existing().drinkId &&
+                         incoming().sellerId == existing().sellerId &&
+                         incoming().createdAt == existing().createdAt &&
+                         incoming().updatedAt is timestamp && incoming().updatedAt <= request.time &&
+                         incoming().diff(existing()).affectedKeys().hasOnly(['quantity', 'sugarLevel', 'iceLevel', 'topping', 'toppingPrice', 'notes', 'updatedAt']);
+
+        allow delete: if isSignedIn() && isValidId(userId) && isValidId(cartItemId) && request.auth.uid == userId;
+      }
+
+      // 4b. User Favorites
+      match /favorites/{drinkId} {
+        allow get: if isSignedIn() && isValidId(userId) && isValidId(drinkId) && request.auth.uid == userId;
+        allow list: if isSignedIn() && isValidId(userId) && request.auth.uid == userId;
+
+        allow create: if isSignedIn() &&
+                         isValidId(userId) &&
+                         isValidId(drinkId) &&
+                         request.auth.uid == userId &&
+                         incoming().keys().hasAll(['drinkId', 'createdAt']) &&
+                         incoming().keys().hasOnly(['drinkId', 'createdAt']) &&
+                         incoming().drinkId == drinkId &&
+                         incoming().createdAt is timestamp && incoming().createdAt <= request.time;
+
+        allow update: if false;
+        allow delete: if isSignedIn() && isValidId(userId) && isValidId(drinkId) && request.auth.uid == userId;
+      }
+
+      // 4c. User Orders (with Terminal State Locking)
+      match /orders/{orderId} {
+        allow get: if isSignedIn() && isValidId(userId) && isValidId(orderId) && request.auth.uid == userId;
+        allow list: if isSignedIn() && isValidId(userId) && request.auth.uid == userId;
+
+        allow create: if isSignedIn() &&
+                         isValidId(userId) &&
+                         isValidId(orderId) &&
+                         request.auth.uid == userId &&
+                         incoming().userId == request.auth.uid &&
+                         incoming().status == 'DIPROSES' &&
+                         incoming().keys().hasAll(['userId', 'orderNumber', 'summaryTitle', 'totalItems', 'subtotal', 'deliveryFee', 'discount', 'totalAmount', 'promoCode', 'paymentMethod', 'deliveryAddress', 'status', 'createdAt', 'updatedAt']) &&
+                         incoming().keys().hasOnly(['userId', 'orderNumber', 'summaryTitle', 'totalItems', 'subtotal', 'deliveryFee', 'discount', 'totalAmount', 'promoCode', 'paymentMethod', 'deliveryAddress', 'status', 'createdAt', 'updatedAt']) &&
+                         isValidDrinkOrder(incoming()) &&
+                         incoming().createdAt is timestamp && incoming().createdAt <= request.time &&
+                         incoming().updatedAt is timestamp && incoming().updatedAt <= request.time;
+
+        allow update: if isSignedIn() &&
+                         isValidId(userId) &&
+                         isValidId(orderId) &&
+                         request.auth.uid == userId &&
+                         isValidDrinkOrder(incoming()) &&
+                         incoming().userId == existing().userId &&
+                         incoming().createdAt == existing().createdAt &&
+                         existing().status in ['DIPROSES', 'DIKIRIM'] &&
+                         (
+                           (existing().status == 'DIPROSES' && incoming().status in ['DIKIRIM', 'DIBATALKAN']) ||
+                           (existing().status == 'DIKIRIM' && incoming().status == 'SELESAI')
+                         ) &&
+                         incoming().updatedAt is timestamp && incoming().updatedAt <= request.time &&
+                         incoming().diff(existing()).affectedKeys().hasOnly(['status', 'updatedAt']);
+
+        allow delete: if false;
+
+        // 4d. Order Line Items (Atomic parent existence check)
+        match /items/{itemId} {
+          allow get: if isSignedIn() && isValidId(userId) && isValidId(orderId) && isValidId(itemId) && request.auth.uid == userId;
+          allow list: if isSignedIn() && isValidId(userId) && isValidId(orderId) && request.auth.uid == userId;
+
+          allow create: if isSignedIn() &&
+                           isValidId(userId) &&
+                           isValidId(orderId) &&
+                           isValidId(itemId) &&
+                           request.auth.uid == userId &&
+                           incoming().orderId == orderId &&
+                           incoming().keys().hasAll(['orderId', 'drinkId', 'drinkName', 'shopName', 'imageKey', 'unitPrice', 'toppingPrice', 'quantity', 'customizationLabel', 'createdAt']) &&
+                           incoming().keys().hasOnly(['orderId', 'drinkId', 'drinkName', 'shopName', 'imageKey', 'unitPrice', 'toppingPrice', 'quantity', 'customizationLabel', 'createdAt']) &&
+                           isValidOrderLineItem(incoming()) &&
+                           incoming().createdAt is timestamp && incoming().createdAt <= request.time &&
+                           existsAfter(/databases/$(database)/documents/users/$(userId)/orders/$(orderId));
+
+          allow update: if false;
+          allow delete: if false;
+        }
+      }
+    }
+
+    // 5. Shared Marketplace Beverage Listings
+    match /drinks/{drinkId} {
+      allow get: if isSignedIn() && isValidId(drinkId) && (existing().status == 'ACTIVE' || existing().sellerId == request.auth.uid);
+      allow list: if isSignedIn() && (existing().status == 'ACTIVE' || existing().sellerId == request.auth.uid);
+
+      allow create: if isSignedIn() &&
+                       isValidId(drinkId) &&
+                       incoming().sellerId == request.auth.uid &&
+                       incoming().keys().hasAll(['sellerId', 'sellerName', 'shopName', 'name', 'description', 'category', 'imageKey', 'price', 'originalPrice', 'sizeLabel', 'calories', 'rating', 'soldCount', 'stock', 'status', 'featured', 'createdAt', 'updatedAt']) &&
+                       incoming().keys().hasOnly(['sellerId', 'sellerName', 'shopName', 'name', 'description', 'category', 'imageKey', 'price', 'originalPrice', 'sizeLabel', 'calories', 'rating', 'soldCount', 'stock', 'status', 'featured', 'createdAt', 'updatedAt']) &&
+                       isValidDrinkListing(incoming()) &&
+                       incoming().createdAt is timestamp && incoming().createdAt <= request.time &&
+                       incoming().updatedAt is timestamp && incoming().updatedAt <= request.time;
+
+      allow update: if isSignedIn() &&
+                       isValidId(drinkId) &&
+                       isValidDrinkListing(incoming()) &&
+                       existing().sellerId == request.auth.uid &&
+                       incoming().sellerId == existing().sellerId &&
+                       incoming().createdAt == existing().createdAt &&
+                       incoming().updatedAt is timestamp && incoming().updatedAt <= request.time &&
+                       (
+                         // Action 1: Seller edits drink details
+                         incoming().diff(existing()).affectedKeys().hasOnly(['sellerName', 'shopName', 'name', 'description', 'category', 'imageKey', 'price', 'originalPrice', 'sizeLabel', 'calories', 'stock', 'status', 'featured', 'updatedAt']) ||
+                         // Action 2: Seller toggles ACTIVE / PAUSED status quickly
+                         incoming().diff(existing()).affectedKeys().hasOnly(['status', 'updatedAt'])
+                       );
+
+      allow delete: if isSignedIn() && isValidId(drinkId) && existing().sellerId == request.auth.uid;
+    }
+  }
+}

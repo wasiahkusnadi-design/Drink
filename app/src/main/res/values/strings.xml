@@ -1,0 +1,18 @@
+<resources>
+    <string name="app_name">SegarKu</string>
+    <string name="tagline">Marketplace Minuman Segar Online</string>
+    <string name="sign_in_google">Masuk dengan Google</string>
+    <string name="nav_home">Beranda</string>
+    <string name="nav_cart">Keranjang</string>
+    <string name="nav_orders">Pesanan</string>
+    <string name="nav_store">Toko Saya</string>
+    <string name="search_hint">Cari kopi, matcha, jus, atau boba...</string>
+    <string name="add_to_cart">Tambah ke Keranjang</string>
+    <string name="checkout_now">Pesan Sekarang</string>
+    <string name="empty_cart_title">Keranjang masih kosong</string>
+    <string name="empty_cart_subtitle">Yuk pilih minuman favoritmu dari berbagai kedai segar di SegarKu.</string>
+    <string name="empty_orders_title">Belum ada pesanan</string>
+    <string name="empty_orders_subtitle">Pesanan minumanmu akan muncul dan bisa dilacak langsung di sini.</string>
+    <string name="empty_store_title">Mulai Jual Minumanmu</string>
+    <string name="empty_store_subtitle">Tambahkan menu kopi, teh, atau jus buatanmu agar bisa dibeli pelanggan di marketplace.</string>
+</resources>
